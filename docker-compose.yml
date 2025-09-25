@@ -4,12 +4,13 @@ services:
   jenkins:
     build: ./jenkins
     container_name: jenkins-dind
+    user: root                    # <== clave para poder usar /var/run/docker.sock
     ports:
       - "8080:8080"
       - "50000:50000"
     volumes:
       - jenkins_home:/var/jenkins_home
-      - /var/run/docker.sock:/var/run/docker.sock  # acceso al Docker del host
+      - /var/run/docker.sock:/var/run/docker.sock
     restart: unless-stopped
 
 volumes:
