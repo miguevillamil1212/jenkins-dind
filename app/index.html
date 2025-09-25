@@ -1,10 +1,176 @@
 <!DOCTYPE html>
-<html>
-  <head>
-    <title>Hola desde Jenkins + Docker!</title>
-  </head>
-  <body>
-    <h1>Despliegue Automático Exitoso 🎉</h1>
-    <p>Este contenedor fue generado desde un pipeline de Jenkins.</p>
-  </body>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Despliegue Automático | Jenkins + Docker</title>
+  <meta name="description" content="Sitio de ejemplo desplegado automáticamente con Jenkins y Docker." />
+  <style>
+    :root{
+      --bg:#0b1020;
+      --card:#121a33;
+      --muted:#9aa4bf;
+      --text:#e8ecf8;
+      --accent:#7c5cff;
+      --accent-2:#23c9ff;
+      --ok:#4ade80;
+      --warn:#f59e0b;
+      --err:#ef4444;
+      --rad:20px;
+      --shadow: 0 10px 30px rgba(0,0,0,.35);
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      color:var(--text);
+      background:
+        radial-gradient(1200px 800px at 10% -20%, #1b2a6c33, transparent),
+        radial-gradient(1000px 600px at 110% 10%, #00e1ff22, transparent),
+        linear-gradient(180deg, #0b1020 0%, #0b0f1a 100%);
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Noto Sans", "Liberation Sans", sans-serif;
+      letter-spacing:.2px;
+    }
+    .wrap{max-width:1100px; margin:0 auto; padding:32px}
+    header{
+      display:flex; align-items:center; justify-content:space-between; gap:16px;
+      padding:10px 0 24px 0;
+    }
+    .brand{
+      display:flex; align-items:center; gap:12px; text-decoration:none; color:var(--text)
+    }
+    .logo{
+      width:38px;height:38px;border-radius:10px;
+      background: conic-gradient(from 210deg, var(--accent), var(--accent-2));
+      box-shadow: 0 0 30px #7c5cff55, inset 0 0 20px #23c9ff33;
+    }
+    .brand h1{font-size:18px; margin:0; font-weight:700}
+    .tag{font-size:12px; padding:4px 8px; border-radius:999px; background:#ffffff10; color:var(--muted); border:1px solid #ffffff12}
+
+    .hero{
+      display:grid; grid-template-columns: 1.1fr 0.9fr; gap:28px; align-items:center;
+    }
+    @media (max-width: 880px){ .hero{grid-template-columns:1fr;}}
+    .card{
+      background:linear-gradient(180deg, #0e1530 0%, #0c1228 100%);
+      border:1px solid #ffffff14; border-radius:var(--rad); box-shadow:var(--shadow);
+      padding:28px;
+    }
+    h2{font-size:40px; line-height:1.1; margin:0 0 14px}
+    p.lead{color:var(--muted); font-size:16px; margin:0 0 22px}
+    .badges{display:flex; flex-wrap:wrap; gap:8px; margin:18px 0 26px}
+    .badge{font-size:12px; padding:6px 10px; border:1px solid #ffffff18; border-radius:999px; background:#ffffff08; color:#cfd6ee}
+
+    .cta{
+      display:inline-flex; gap:10px; align-items:center; padding:12px 16px;
+      border-radius:12px; border:1px solid #ffffff20; color:var(--text); text-decoration:none;
+      background: linear-gradient(90deg, #7c5cff 0%, #23c9ff 100%);
+      font-weight:700; box-shadow:0 10px 20px #7c5cff33; transform:translateY(0);
+      transition:transform .15s ease, box-shadow .15s ease, opacity .2s ease;
+    }
+    .cta span.icon{width:18px; height:18px; display:inline-block; background: #fff; -webkit-mask: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17L17 7"/><path d="M7 7h10v10"/></svg>') center/contain no-repeat; mask: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17L17 7"/><path d="M7 7h10v10"/></svg>') center/contain no-repeat;}
+    .cta:hover{transform:translateY(-1px); box-shadow:0 12px 24px #7c5cff44}
+    .cta:active{transform:translateY(0)}
+
+    .screen{
+      position:relative; border-radius:var(--rad); overflow:hidden; border:1px solid #ffffff14; box-shadow:var(--shadow);
+      background: radial-gradient(120% 120% at 0% 0%, #1a234b 0%, #0f1736 40%, #0b122a 100%);
+      min-height:260px;
+    }
+    .grid{
+      display:grid; grid-template-columns: repeat(3, 1fr); gap:14px; margin-top:26px;
+    }
+    @media (max-width: 680px){ .grid{grid-template-columns:1fr;}}
+    .tile{
+      background:linear-gradient(180deg, #0f1938 0%, #0d1631 100%);
+      border:1px solid #ffffff12; border-radius:16px; padding:18px; box-shadow: 0 6px 18px rgba(0,0,0,.25);
+    }
+    .tile h3{margin:0 0 8px; font-size:16px}
+    .kpi{font-size:26px; font-weight:800; margin:2px 0 8px}
+    .muted{color:var(--muted); font-size:13px}
+    .ok{color:var(--ok)} .warn{color:var(--warn)} .err{color:var(--err)}
+
+    footer{
+      margin-top:36px; padding:20px; color:#aeb6d6; font-size:13px; text-align:center;
+      border-top:1px solid #ffffff12
+    }
+
+    /* sutil animación al fondo */
+    @keyframes floaty {
+      from { transform:translateY(0) }
+      50%  { transform:translateY(-6px) }
+      to   { transform:translateY(0) }
+    }
+    .logo{ animation: floaty 6s ease-in-out infinite }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <a class="brand" href="#">
+        <div class="logo" aria-hidden="true"></div>
+        <h1>Jenkins + Docker</h1>
+      </a>
+      <span class="tag">Despliegue automático</span>
+    </header>
+
+    <section class="hero">
+      <div class="card">
+        <h2>Despliegue Automático <br/>Exitoso 🎉</h2>
+        <p class="lead">
+          Este sitio fue construido con Docker y desplegado mediante un pipeline de Jenkins.  
+          Incluye build de imagen, puesta en marcha del contenedor y verificación automática (*smoke test*).
+        </p>
+
+        <div class="badges">
+          <span class="badge">Docker • PHP 8.2 Apache</span>
+          <span class="badge">Jenkinsfile Declarative</span>
+          <span class="badge">Smoke test con curl</span>
+          <span class="badge">CI/CD</span>
+        </div>
+
+        <a class="cta" href="#" onclick="alert('¡Hola! El despliegue está vivo ✨'); return false;">
+          <span class="icon"></span> Ver estado
+        </a>
+
+        <div class="grid">
+          <div class="tile">
+            <h3>Imagen</h3>
+            <div class="kpi">demo-web</div>
+            <div class="muted">Construida en el job de Jenkins</div>
+          </div>
+          <div class="tile">
+            <h3>Exposición</h3>
+            <div class="kpi">:8081 → :80</div>
+            <div class="muted">Publicada en el host</div>
+          </div>
+          <div class="tile">
+            <h3>Estado</h3>
+            <div class="kpi ok">OK</div>
+            <div class="muted">Smoke test superado</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="screen">
+        <!-- Pantalla “mock” con código -->
+        <pre style="margin:0;padding:22px;white-space:pre-wrap;color:#d5dcff;font-size:13px;line-height:1.5;">
+$ docker build -t demo-web:latest ./app
+# Construyendo imagen…
+$ docker run -d -p 8081:80 demo-web:latest
+# Contenedor en marcha: http://localhost:8081
+$ curl -I http://host.docker.internal:8081
+HTTP/1.1 200 OK
+Server: Apache/2.4 (Debian) PHP/8.2
+Content-Type: text/html; charset=UTF-8
+        </pre>
+      </div>
+    </section>
+
+    <footer>
+      Hecho con 💙 para pruebas de CI/CD — Jenkins & Docker ·
+      <span style="opacity:.75">© <script>document.write(new Date().getFullYear())</script></span>
+    </footer>
+  </div>
+</body>
 </html>
