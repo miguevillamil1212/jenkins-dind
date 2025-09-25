@@ -2,7 +2,7 @@ pipeline {
   agent any
 
   options {
-    skipDefaultCheckout(true)   // evita "Declarative: Checkout SCM"
+    skipDefaultCheckout(true)   // evitamos el checkout automático que rompe el workspace
     timestamps()
   }
 
@@ -17,14 +17,18 @@ pipeline {
   stages {
     stage('Workspace limpio + Checkout') {
       steps {
-        deleteDir() // limpia todo el workspace real
+        deleteDir()
         checkout([
           $class: 'GitSCM',
           branches: [[name: "*/${BRANCH}"]],
           userRemoteConfigs: [[url: "${REPO_URL}"]]
         ])
-        sh 'git rev-parse --is-inside-work-tree && git log -1 --oneline || true'
-        sh 'ls -la'
+        sh '''
+          echo "Commit actual:"
+          git log -1 --oneline || true
+          echo "Contenido del repo:"
+          ls -la
+        '''
       }
     }
 
@@ -42,6 +46,7 @@ pipeline {
     stage('Run container') {
       steps {
         sh '''
+          set -e
           echo "=== CLEANUP OLD CONTAINERS ==="
           docker ps -aq --filter "name=^/${APP_NAME}$" | xargs -r docker rm -f
 
@@ -57,16 +62,44 @@ pipeline {
     stage('Smoke test') {
       steps {
         sh '''
-          echo "=== SMOKE TEST ==="
-          sleep 2
-          curl -fsS http://localhost:${HOST_PORT} >/dev/null
+          echo "=== SMOKE TEST (host.docker.internal) ==="
+          for i in {1..15}; do
+            if curl -fsS "http://host.docker.internal:${HOST_PORT}" >/dev/null; then
+              echo "SMOKE OK en host.docker.internal:${HOST_PORT}"
+              exit 0
+            fi
+            echo "Aún no responde (intento $i/15). Reintentando en 2s..."
+            sleep 2
+          done
+
+          echo "Smoke test contra host.docker.internal falló. Probando IP del contenedor..."
+          CTN_IP=$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' ${APP_NAME} || true)
+          if [ -n "$CTN_IP" ] && curl -fsS "http://${CTN_IP}:80" >/dev/null; then
+            echo "SMOKE OK vía IP del contenedor: ${CTN_IP}:80"
+            exit 0
+          fi
+
+          echo "Smoke test FAILED. Últimos logs del contenedor:"
+          docker logs ${APP_NAME} | tail -n 200 || true
+          exit 1
         '''
       }
     }
   }
 
   post {
-    success { echo "OK → http://localhost:${HOST_PORT}" }
-    always  { echo "Fin del pipeline" }
+    success {
+      echo "✅ Despliegue OK → abre: http://localhost:${HOST_PORT}"
+    }
+    always {
+      echo "Fin del pipeline"
+    }
+    failure {
+      script {
+        // Adjunta logs del contenedor si falló (no rompe si no existe)
+        sh 'docker logs ${APP_NAME} > container.log 2>/dev/null || true'
+        archiveArtifacts artifacts: 'container.log', onlyIfSuccessful: false, allowEmptyArchive: true
+      }
+    }
   }
 }
