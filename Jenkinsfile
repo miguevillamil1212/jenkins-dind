@@ -1,16 +1,30 @@
 pipeline {
   agent any
 
+  options {
+    skipDefaultCheckout(true)   // evita "Declarative: Checkout SCM"
+    timestamps()
+  }
+
   environment {
     APP_NAME  = 'demo-web'
     HOST_PORT = '8081'
     IMAGE_TAG = "demo-web:${env.BUILD_NUMBER}"
+    REPO_URL  = 'https://github.com/miguevillamil1212/jenkins-dind.git'
+    BRANCH    = 'main'
   }
 
   stages {
-    stage('Checkout') {
+    stage('Workspace limpio + Checkout') {
       steps {
-        git branch: 'main', url: 'https://github.com/miguevillamil1212/jenkins-php2.git'
+        deleteDir() // limpia todo el workspace real
+        checkout([
+          $class: 'GitSCM',
+          branches: [[name: "*/${BRANCH}"]],
+          userRemoteConfigs: [[url: "${REPO_URL}"]]
+        ])
+        sh 'git rev-parse --is-inside-work-tree && git log -1 --oneline || true'
+        sh 'ls -la'
       }
     }
 
@@ -33,6 +47,9 @@ pipeline {
 
           echo "=== RUN NEW CONTAINER ==="
           docker run -d --name ${APP_NAME} -p ${HOST_PORT}:80 ${IMAGE_TAG}
+
+          echo "=== PS ==="
+          docker ps --format "table {{.Names}}\\t{{.Image}}\\t{{.Ports}}"
         '''
       }
     }
@@ -40,19 +57,16 @@ pipeline {
     stage('Smoke test') {
       steps {
         sh '''
+          echo "=== SMOKE TEST ==="
           sleep 2
-          curl -fsS http://localhost:${HOST_PORT} || (echo "Smoke test failed" && exit 1)
+          curl -fsS http://localhost:${HOST_PORT} >/dev/null
         '''
       }
     }
   }
 
   post {
-    success {
-      echo "Aplicación disponible en: http://localhost:${HOST_PORT}"
-    }
-    failure {
-      echo "Pipeline falló, revisa logs"
-    }
+    success { echo "OK → http://localhost:${HOST_PORT}" }
+    always  { echo "Fin del pipeline" }
   }
 }
